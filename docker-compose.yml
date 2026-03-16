@@ -1,0 +1,28 @@
+services:
+  tinychat:
+    build: .
+    platform: linux/arm64   # Apple Silicon
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount local weights/ so the container can read checkpoints
+      - ./weights:/app/weights:ro
+    environment:
+      - TINYCHAT_BASE_DIR=/app/weights
+    command:
+      - uv
+      - run
+      - python
+      - -m
+      - scripts.serve
+      - --depth=4
+      - --source=sft
+      - --host=0.0.0.0
+      - --port=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
